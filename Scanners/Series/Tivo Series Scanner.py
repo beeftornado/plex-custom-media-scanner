@@ -121,7 +121,7 @@ def Scan(path, files, mediaList, subdirs):
     	  continue
 
         # Test for matching tivo server files
-    	found = False
+        found = False
         for rx in episode_regexps:
           match = re.search(rx, file, re.IGNORECASE)
           if match:
