@@ -108,7 +108,7 @@ def Scan(path, files, mediaList, subdirs):
         #print "pytivo metadata, ", meta
 
         # Skip tv shows based on pytivo metadata file and backup to filename if not present
-	    is_movie = False
+	is_movie = False
         if 'isEpisode' in meta:
           if meta['isEpisode'] == 'false':
             is_movie = True
@@ -121,7 +121,7 @@ def Scan(path, files, mediaList, subdirs):
     	  continue
 
         # Test for matching tivo server files
-	    found = False
+    	found = False
         for rx in episode_regexps:
           match = re.search(rx, file, re.IGNORECASE)
           if match:
