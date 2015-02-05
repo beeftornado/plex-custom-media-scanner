@@ -40,6 +40,7 @@ episode_regexps = [
     '^(?P<season>)(?P<ep>)(?P<title>.+?)\s\(Rec.*$',	                                                    # Blink (Rec 09_13_2012).mp4
     '^Ep[^0-9a-z](?P<season>[0-9]{1,2})(?P<ep>[0-9]{2})[_\s](?P<title>[\w\s,.\-:;\'\"]+)$',                 # Ep#112 Bad Wolf.mp4
     '(?P<show>.*?)([^0-9]|^)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]+)(-[0-9]+[Xx](?P<secondEp>[0-9]+))?',    # 3x03
+    '^S(?P<season>[0-9]{1,2})[Xx]?[eE]?(?P<ep>[0-9]{2})',                                                   # S1E01
   ]
 
 date_regexps = [
@@ -92,33 +93,33 @@ def Scan(path, files, mediaList, subdirs):
         file = os.path.basename(i)
         (file, ext) = os.path.splitext(file)
         
-	    # See if there's a pytivo metadata file to peek at
+        # See if there's a pytivo metadata file to peek at
         meta = dict()
         metadata_filename = '{0}.txt'.format(i.replace('_LQ', ''))
         if os.path.isfile(metadata_filename):
           with open(metadata_filename, 'r') as f:
             for line in f:
-	      line = line.strip()
-	      if line and len(line):
+              line = line.strip()
+              if line and len(line):
                 line_a = line.split(' : ')
-		        if len(line_a) > 1:
+                if len(line_a) > 1:
                   key, value = line.split(' : ')
                   meta[key] = value
 
         #print "pytivo metadata, ", meta
 
         # Skip tv shows based on pytivo metadata file and backup to filename if not present
-	is_movie = False
+        is_movie = False
         if 'isEpisode' in meta:
           if meta['isEpisode'] == 'false':
             is_movie = True
         elif file.strip().startswith('(Rec'):
           is_movie = True
 
-    	# Skip tivo recorded movies
-    	if is_movie == True:
-    	  print "File {0} is determined to be a movie, skipping".format(file)
-    	  continue
+        # Skip tivo recorded movies
+        if is_movie == True:
+          print "File {0} is determined to be a movie, skipping".format(file)
+          continue
 
         # Test for matching tivo server files
         found = False
@@ -127,27 +128,31 @@ def Scan(path, files, mediaList, subdirs):
           if match:
             season = int(match.group('season')) if match.group('season') and match.group('season') != '' else None
             episode = int(match.group('ep')) if match.group('ep') and match.group('ep') != '' else None
-            title = match.group('title') if match.group('title') else None
-	    if 'episodeTitle' in meta:
-	      title = meta['episodeTitle']
-	    if 'seriesTitle' in meta:
-	      show = meta['seriesTitle']
-	    originalAirDate = None
-	    if 'originalAirDate' in meta:
-	      originalAirDate = meta['originalAirDate'].split('T')[0]
-	    if season is None and episode is None and title is None:
-	      continue
-	    if season is None and originalAirDate:
-	      season = int(originalAirDate.split('-')[0])
+            try:
+              title = match.group('title') if match.group('title') else None
+            except IndexError:
+              title = None
+            
+            if 'episodeTitle' in meta:
+              title = meta['episodeTitle']
+            if 'seriesTitle' in meta:
+              show = meta['seriesTitle']
+            originalAirDate = None
+            if 'originalAirDate' in meta:
+              originalAirDate = meta['originalAirDate'].split('T')[0]
+            if season is None and episode is None and title is None:
+              continue
+            if season is None and originalAirDate:
+              season = int(originalAirDate.split('-')[0])
             found = True
             tv_show = Media.Episode(show, season, episode, title, None)
-	    if originalAirDate is not None:
-	      tv_show.released_at = originalAirDate
+            if originalAirDate is not None:
+              tv_show.released_at = originalAirDate
             tv_show.parts.append(i)
             mediaList.append(tv_show)
             break
         if found == True:
-            continue
+          continue
       
         if done == False:
           print "Got nothing for:", file
